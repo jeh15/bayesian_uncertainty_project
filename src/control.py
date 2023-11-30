@@ -70,6 +70,7 @@ def main(args):
     state = np.concatenate([state, action], axis=1)
     states = [state.flatten()]
     predicted_states = [state.flatten()[:-1]]
+    percentiles = []
     inference_time = []
     step_time = []
     start_time = time.time()
@@ -81,6 +82,7 @@ def main(args):
         # Predict next state:
         start_inference_time = time.time()
         predicted_state, A = jit_inference_fn(predict_key, state)
+        mean_predicted_state = np.mean(predicted_state, axis=0).flatten()
 
         inference_time.append(time.time() - start_inference_time)
 
@@ -119,7 +121,8 @@ def main(args):
             axis=0,
         )
         states.append(state.flatten())
-        predicted_states.append(np.mean(predicted_state, axis=0).flatten())
+        predicted_states.append(mean_predicted_state)
+        percentiles.append(np.percentile(predicted_state, [5.0, 95.0], axis=0))
 
     end_time = time.time()
     print(f"Simulation Time: {config.simulation_params.dt * num_steps}")
@@ -130,6 +133,9 @@ def main(args):
     # Numpy arrays:
     states = np.asarray(states)
     predicted_states = np.asarray(predicted_states)
+    percentiles = np.asarray(percentiles)
+    x_percentiles = percentiles[:, :, 0]
+    dx_percentiles = percentiles[:, :, 1]
 
     # Cartpole Video:
     # generate_video(config, states[:, :-1], "cart_pole")
@@ -138,10 +144,16 @@ def main(args):
     fig, ax = plt.subplots(3, constrained_layout=True)
     ax[0].plot(np.arange(states[:, 0].shape[0]), states[:, 0])
     ax[0].plot(np.arange(predicted_states[:, 0].shape[0]), predicted_states[:, 0])
+    ax[0].fill_between(
+        np.arange(1, x_percentiles.shape[0]+1), x_percentiles[:, 0], x_percentiles[:, 1], color="lightblue"
+    )
     ax[0].set(xlabel="t", ylabel="x")
     ax[0].set_ylim([-3.0, 3.0])
     ax[1].plot(np.arange(states[:, 0].shape[0]), states[:, 1])
     ax[1].plot(np.arange(predicted_states[:, 0].shape[0]), predicted_states[:, 1])
+    ax[1].fill_between(
+        np.arange(1, dx_percentiles.shape[0]+1), dx_percentiles[:, 0], dx_percentiles[:, 1], color="lightblue"
+    )
     ax[1].set(xlabel="t", ylabel="dx")
     ax[1].set_ylim([-3.0, 3.0])
     ax[2].plot(np.arange(states[:, 0].shape[0]), states[:, 2])
@@ -170,7 +182,7 @@ def main(args):
     # ax[4].set(xlabel="t", ylabel="u")
     # ax[4].set_ylim([-5.0, 5.0])
 
-    filename = "msd_lqr.pdf"
+    filename = "msd_lqr_2.pdf"
     filepath = os.path.join(
         os.path.dirname(__file__),
         filename,
@@ -181,7 +193,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Test trained model with LQR controller.")
     parser.add_argument("--seed", nargs="?", default=0, type=int)
-    parser.add_argument("--model-path", nargs="?", default="mass_spring_damper.pickle", type=str, help='path to trained model.')
+    parser.add_argument("--model-path", nargs="?", default="mass_spring_damper_reduced_v2.pickle", type=str, help='path to trained model.')
     parser.add_argument("--num-devices", nargs="?", default=1, type=int, help='number of devices')
     parser.add_argument("--device", default="cpu", type=str, help='use "cpu" or "gpu".')
     args = parser.parse_args()

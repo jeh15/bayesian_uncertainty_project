@@ -80,7 +80,7 @@ def main(args):
         ax.imshow(layer_average)
         plt.show()
 
-    filename = "mass_spring_damper_lqr.pdf"
+    filename = "mass_spring_damper_weights.pdf"
     filepath = os.path.join(
         os.path.dirname(__file__),
         filename,
@@ -93,7 +93,7 @@ if __name__ == "__main__":
     parser.add_argument("--seed", nargs="?", default=0, type=int)
     parser.add_argument("--model-path", nargs="?", default="mass_spring_damper.pickle", type=str, help='path to trained model.')
     parser.add_argument("--num-devices", nargs="?", default=1, type=int, help='number of devices')
-    parser.add_argument("--device", default="gpu", type=str, help='use "cpu" or "gpu".')
+    parser.add_argument("--device", default="cpu", type=str, help='use "cpu" or "gpu".')
     args = parser.parse_args()
 
     numpyro.enable_x64(use_x64=True)

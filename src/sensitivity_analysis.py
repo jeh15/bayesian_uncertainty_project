@@ -86,6 +86,11 @@ def main(args):
     _, s_l, _ = np.linalg.svd(laplacian_matrix)
     number_of_connections = np.where(s_l >= 1e-6)[0].shape[0]
 
+    # Dedensify Graph:
+    C, C_nodes = nx.dedensify(G, threshold=2)
+    C_a = nx.adjacency_matrix(C, weight='weight').todense()
+    C_l = nx.directed_laplacian_matrix(C, weight='weight')
+
     # Graph Singular Values:
     fig, ax = plt.subplots()
     ax.plot(s_a, linestyle='none', label='Adjacency', marker='*')
@@ -130,11 +135,42 @@ def main(args):
     )
     plt.savefig(filepath)
 
+    # Dedensified Graph:
+    fig, ax = plt.subplots()
+    pos = graphviz_layout(C, prog='dot', args="-Grankdir=LR")
+    nx.draw(C, with_labels=True, pos=pos, ax=ax, font_weight='bold')
+    filename = 'dedensified_graph.pdf'
+    filepath = os.path.join(
+        os.path.dirname(__file__),
+        filename,
+    )
+    plt.savefig(filepath)
+
+    # Dedensified Graph Adjacency Matrix:
+    fig, ax = plt.subplots()
+    ax.imshow(C_a)
+    filename = 'dedensified_adjacency_matrix.pdf'
+    filepath = os.path.join(
+        os.path.dirname(__file__),
+        filename,
+    )
+    plt.savefig(filepath)
+
+    # Dedensified Graph Laplacian Matrix:
+    fig, ax = plt.subplots()
+    ax.imshow(C_l)
+    filename = 'dedensified_laplacian_matrix.pdf'
+    filepath = os.path.join(
+        os.path.dirname(__file__),
+        filename,
+    )
+    plt.savefig(filepath)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="Sensitivity analysis of model.")
     parser.add_argument("--seed", nargs="?", default=0, type=int)
-    parser.add_argument("--model-path", nargs="?", default="mass_spring_damper_reduced_v2.pickle", type=str, help='path to trained model.')
+    parser.add_argument("--model-path", nargs="?", default="mass_spring_damper.pickle", type=str, help='path to trained model.')
     parser.add_argument("--num-devices", nargs="?", default=1, type=int, help='number of devices')
     parser.add_argument("--device", default="cpu", type=str, help='use "cpu" or "gpu".')
     args = parser.parse_args()
