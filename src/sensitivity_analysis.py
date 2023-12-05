@@ -82,6 +82,8 @@ def main(args):
     laplacian_matrix = nx.directed_laplacian_matrix(G, weight='weight')
 
     # Graph Eigenvalues:
+    eig_a = np.linalg.eig(adjacency_matrix)
+    eig_l = np.linalg.eig(laplacian_matrix)
     _, s_a, _ = np.linalg.svd(adjacency_matrix)
     _, s_l, _ = np.linalg.svd(laplacian_matrix)
     number_of_connections = np.where(s_l >= 1e-6)[0].shape[0]
@@ -90,6 +92,9 @@ def main(args):
     C, C_nodes = nx.dedensify(G, threshold=2)
     C_a = nx.adjacency_matrix(C, weight='weight').todense()
     C_l = nx.directed_laplacian_matrix(C, weight='weight')
+
+    eig_ca = np.linalg.eig(C_a)
+    eig_cl = np.linalg.eig(C_l)
 
     # Graph Singular Values:
     fig, ax = plt.subplots()
